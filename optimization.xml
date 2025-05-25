@@ -1,0 +1,90 @@
+
+
+<!-- to force compaction:
+ALTER TABLE your_table COMPACT 'minor'; -->
+
+
+
+
+    <!--  Vectorization
+set hive.vectorized.execution.enabled=true;
+set hive.vectorized.execution.reduce.enabled=true;
+
+<property>
+  <name>hive.vectorized.execution.enabled</name>
+  <value>true</value>
+</property>
+<property>
+  <name>hive.vectorized.execution.reduce.enabled</name>
+  <value>true</value>
+</property>
+
+
+
+
+-- LLAP (when configured)
+set hive.execution.engine=tez;
+set hive.llap.execution.mode=all; 
+
+<property>
+  <name>hive.llap.execution.mode</name>
+  <value>all</value> <!-- can be "only", "none", "auto" -->
+</property>
+
+<property>
+  <name>hive.llap.daemon.num.executors</name>
+  <value>4</value>
+</property>
+
+<property>
+  <name>hive.llap.io.memory.size</name>
+  <value>1024</value> <!-- 1 GB IO cache -->
+</property>
+
+<property>
+  <name>hive.llap.io.enabled</name>
+  <value>true</value>
+</property>
+
+<property>
+  <name>hive.llap.daemon.yarn.container.mb</name>
+  <value>8192</value> <!-- 8 GB container -->
+</property>
+
+
+
+-->
+
+
+<!-- 
+need to start llap daemons
+on the host where you have the HiveServer2 running
+llap-daemon --name llap0 --instances 4 --cache 1024m --executors 4 --executor-size 2g --size 8g
+
+
+
+
+in the beginning
+-- Confirm engine
+set hive.execution.engine;
+
+-- Check vectorization status
+set hive.vectorized.execution.enabled;
+
+-- Force LLAP usage
+set hive.llap.execution.mode=all;
+
+-- View DAG for Tez jobs
+set tez.view.dag.info=true;
+
+
+llap-daemon --name llap0 \
+  --instances 4 \
+  --cache 1024m \
+  --executors 4 \
+  --executor-size 2g \
+  --size 8g \
+  --slider-am-container-mb 1024 \
+  --loglevel INFO \
+  --restart -->
+

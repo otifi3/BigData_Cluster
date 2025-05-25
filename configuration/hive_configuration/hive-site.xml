@@ -1,0 +1,109 @@
+<configuration>
+    <!-- Metastore DB connection -->
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:postgresql://metastore_db:5432/metastore</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>org.postgresql.Driver</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>hiveuser</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>123</value>
+    </property>
+
+    <!-- Metastore and execution -->
+    <property>
+        <name>hive.metastore.uris</name>
+        <value>thrift://metastore:9083</value>
+    </property>
+    <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>/user/hive/warehouse</value>
+    </property>
+    <property>
+        <name>hive.execution.engine</name>
+        <value>spark</value>
+    </property>
+
+    <!-- Spark on YARN -->
+    <property>
+        <name>spark.master</name>
+        <value>yarn</value>
+    </property>
+    <property>
+        <name>spark.submit.deployMode</name>
+        <value>cluster</value>
+    </property>
+    <property>
+        <name>spark.home</name>
+        <value>/usr/local/spark</value>
+    </property>
+    <property>
+        <name>hive.aux.jars.path</name>
+        <value>file:///usr/local/spark/jars</value>
+    </property>
+
+    <!-- HiveServer2 configs -->
+    <property>
+        <name>hive.server2.thrift.bind.host</name>
+        <value>0.0.0.0</value>
+    </property>
+    <property>
+        <name>hive.server2.thrift.port</name>
+        <value>10000</value>
+    </property>
+    <property>
+        <name>hive.server2.authentication</name>
+        <value>NONE</value>
+    </property>
+    <property>
+        <name>hive.server2.enable.doAs</name>
+        <value>false</value>
+    </property>
+
+    <!-- ACID & concurrency -->
+    <property>
+        <name>hive.txn.manager</name>
+        <value>org.apache.hadoop.hive.ql.lockmgr.DbTxnManager</value>
+    </property>
+    <property>
+        <name>hive.support.concurrency</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.enforce.bucketing</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.transactional.table.scan</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.txn.timeout</name>
+        <value>86400</value>
+    </property>
+    <property>
+        <name>hive.default.fileformat</name>
+        <value>ORC</value>
+    </property>
+    <property>
+        <name>hive.compactor.initiator.on</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.compactor.worker.threads</name>
+        <value>1</value>
+    </property>
+
+    <!-- Optional: allow Spark client timeout -->
+    <property>
+        <name>hive.spark.client.server.connect.timeout</name>
+        <value>10000ms</value>
+    </property>
+</configuration>

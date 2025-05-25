@@ -1,0 +1,294 @@
+services:
+
+  zookeeper1:
+    build:
+      context: .
+      target: zookeeper-node
+    container_name: zookeeper1
+    hostname: zookeeper1
+    networks:
+      - hadoop_network
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper1:/usr/local/zookeeper
+      - j1:/usr/local/hadoop/journal
+    healthcheck:
+      test: ["CMD-SHELL", "jps | grep -q QuorumPeerMain && jps | grep -q JournalNode"]
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
+
+  zookeeper2:
+    build:
+      context: .
+      target: zookeeper-node
+    container_name: zookeeper2
+    hostname: zookeeper2
+    networks:
+      - hadoop_network
+    ports:
+      - "2182:2181"
+    volumes:
+      - zookeeper2:/usr/local/zookeeper
+      - j2:/usr/local/hadoop/journal
+    healthcheck:
+      test: ["CMD-SHELL", "jps | grep -q QuorumPeerMain && jps | grep -q JournalNode"]
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
+
+  zookeeper3:
+    build:
+      context: .
+      target: zookeeper-node
+    container_name: zookeeper3
+    hostname: zookeeper3
+    networks:
+      - hadoop_network
+    ports:
+      - "2183:2181"
+    volumes:
+      - zookeeper3:/usr/local/zookeeper
+      - j3:/usr/local/hadoop/journal
+    healthcheck:
+      test: ["CMD-SHELL", "jps | grep -q QuorumPeerMain && jps | grep -q JournalNode"]
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
+
+  master1:
+    build:
+      context: .
+      target: hadoop-node
+    container_name: master1
+    hostname: master1
+    networks:
+      - hadoop_network
+    ports:
+      - "9870:9870"
+      - "8088:8088"
+    volumes:
+      - nn1:/usr/local/hadoop/hdfs/namenode
+    healthcheck:
+      test: ["CMD", "/home/hadoop/health_check.sh"]
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
+    depends_on:
+      zookeeper1:
+        condition: service_healthy
+      zookeeper2:
+        condition: service_healthy
+      zookeeper3:
+        condition: service_healthy
+
+  master2:
+    build:
+      context: .
+      target: hadoop-node
+    container_name: master2
+    hostname: master2
+    networks:
+      - hadoop_network
+    ports:
+      - "9871:9870"
+      - "8089:8088"
+    volumes:
+      - nn2:/usr/local/hadoop/hdfs/namenode
+    healthcheck:
+      test: ["CMD", "/home/hadoop/health_check.sh"]
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
+    depends_on:
+      master1:
+        condition: service_healthy
+      zookeeper1:
+        condition: service_healthy
+      zookeeper2:
+        condition: service_healthy
+      zookeeper3:
+        condition: service_healthy
+  worker1:
+    build:
+      context: .
+      target: hadoop-node
+    container_name: worker1
+    hostname: worker1
+    networks:
+      - hadoop_network
+    ports:
+      - "16021:16020"  
+      - "9090:9090"
+    volumes:
+      - dn1:/usr/local/hadoop/hdfs/datanode
+      - dtmp1:/usr/local/hadoop/tmp
+      - dlogs1:/usr/local/hadoop/logs
+    depends_on:
+      master1:
+        condition: service_healthy
+      master2:
+        condition: service_healthy
+
+  worker2:
+    build:
+      context: .
+      target: hadoop-node
+    container_name: worker2
+    hostname: worker2
+    networks:
+      - hadoop_network
+    ports:
+      - "16020:16020"  
+      - "9091:9090"
+    volumes:
+      - dn2:/usr/local/hadoop/hdfs/datanode
+      - dtmp2:/usr/local/hadoop/tmp
+      - dlogs2:/usr/local/hadoop/logs
+    depends_on:
+      master1:
+        condition: service_healthy
+      master2:
+        condition: service_healthy
+
+  # hm1:
+  #   build:
+  #     context: .
+  #     target: hbase
+  #   container_name: hm1
+  #   hostname: hm1
+  #   networks:
+  #     - hadoop_network
+  #   ports:
+  #     - "16000:16000"  
+  #     - "16010:16010" 
+  #     - "9092:9090"
+  #   depends_on:
+  #     master1:
+  #       condition: service_healthy
+  #     master2:
+  #       condition: service_healthy
+  #   volumes:
+  #     - hm1_data:/usr/local/hbase/data 
+
+  # hm2:
+  #   build:
+  #     context: .
+  #     target: hbase
+  #   container_name: hm2
+  #   hostname: hm2
+  #   networks:
+  #     - hadoop_network
+  #   ports:
+  #     - "16001:16000" 
+  #     - "16011:16010"
+  #     - "9093:9090"
+  #   depends_on:
+  #     master1:
+  #       condition: service_healthy
+  #     master2:
+  #       condition: service_healthy
+  #   volumes:
+  #     - hm2_data:/usr/local/hbase/data
+
+# postgres:
+#     image: postgres:13
+#     container_name: hive_postgres
+#     hostname: hive_db
+#     environment:
+#       POSTGRES_PASSWORD: 123
+#       POSTGRES_USER: hiveuser
+#       POSTGRES_DB: metastore
+#     volumes:
+#       - metastore:/var/lib/postgresql/data
+#     networks:
+#       - hadoop_network
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U hiveuser -d metastore"]
+#       interval: 7s
+#       timeout: 7s
+#       retries: 15
+#       start_period: 15s
+#     # restart: always
+
+#   h1:
+#     build: 
+#       context: .
+#       target: hive
+#     container_name: h1
+#     hostname: h1
+#     # volumes:
+#     #   -
+#     networks:
+#       - hadoop_network
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#       master1:
+#         condition: service_healthy
+#       master2:
+#         condition: service_healthy
+#       m3:
+#         condition: service_healthy
+#     healthcheck:
+#       test: ["CMD-SHELL", "ps aux | grep -i 'HiveMetaStore' | grep -v grep"]
+#       interval: 7s
+#       timeout: 7s
+#       retries: 15
+#       start_period: 15s
+#     # restart: always     
+#   h2:
+#     build: 
+#       context: .
+#       target: hive
+#     container_name: h2
+#     hostname: h2
+#     # volumes:
+#     #   - 
+#     ports:
+#         - "10000:10000"
+#         - "10002:10002"
+#     networks:
+#       - hadoop_network
+#     depends_on:
+#       h1:
+#         condition: service_healthy
+#     healthcheck:
+#       test: ["CMD-SHELL", "ps aux | grep -i 'HiveServer2' | grep -v grep"]
+#       interval: 7s
+#       timeout: 7s
+#       retries: 15
+#       start_period: 15s
+#     environment:
+#       - HADOOP_CLASSPATH=/usr/local/tez/conf:/usr/local/tez/tez-mapreduce-0.10.3.jar
+#     # restart: always
+
+
+networks:
+  hadoop_network:
+  
+  
+volumes:
+  nn1:
+  nn2:
+  zookeeper1:
+  zookeeper2:
+  zookeeper3:
+  j1:
+  j2:
+  j3:
+  dn1:
+  dtmp1:
+  dlogs1:
+  dn2:
+  dtmp2:
+  dlogs2:
+
+  # hm1_data:
+  # hm2_data:
