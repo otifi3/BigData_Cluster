@@ -122,9 +122,6 @@ All components are containerized and coordinated using Docker Compose for simpli
 4. **Access Spark History UI**
 
    Open [http://localhost:18080](http://localhost:18080) in your browser
-
-> 🛠️ You can extend or scale the cluster by adjusting the `docker-compose.override.yml` or adding new services.
-
 ---
 
 ## 🧪 Supported Use Cases
