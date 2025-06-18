@@ -127,6 +127,7 @@ services:
       - "16021:16020"
       - "9090:9090"
     volumes:
+      - ./spark:/home/hadoop/spark
       - dn1:/usr/local/hadoop/hdfs/datanode
       - dtmp1:/usr/local/hadoop/tmp
       - dlogs1:/usr/local/hadoop/logs
@@ -148,6 +149,7 @@ services:
       - "16020:16020"
       - "9091:9090"
     volumes:
+      - ./spark:/home/hadoop/spark
       - dn2:/usr/local/hadoop/hdfs/datanode
       - dtmp2:/usr/local/hadoop/tmp
       - dlogs2:/usr/local/hadoop/logs
