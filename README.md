@@ -154,5 +154,5 @@ All components are containerized and coordinated using Docker Compose for simpli
 
 ---
 
-## 😋 Contact
+## 📫 Contact
 For setup questions or improvements, reach out via GitHub: [@otifi3](https://github.com/otifi3)
