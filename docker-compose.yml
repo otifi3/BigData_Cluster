@@ -260,7 +260,27 @@ services:
         condition: service_healthy
     volumes:
       - hm2_data:/usr/local/hbase/data
-
+      
+  spark-history:
+    build:
+      context: .
+      target: hadoop-node
+    container_name: spark-history
+    hostname: spark-history
+    networks:
+      - hadoop_network
+    ports:
+      - "18080:18080"
+    environment:
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=hdfs:///spark-logs
+    depends_on:
+      master1:
+        condition: service_healthy
+    command: >
+      bash -c "
+        $SPARK_HOME/sbin/start-history-server.sh &&
+        tail -f /dev/null
+      "
 networks:
   hadoop_network:
 
