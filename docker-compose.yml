@@ -1,5 +1,4 @@
 services:
-
   zookeeper1:
     build:
       context: .
@@ -115,6 +114,7 @@ services:
         condition: service_healthy
       zookeeper3:
         condition: service_healthy
+
   worker1:
     build:
       context: .
@@ -124,7 +124,7 @@ services:
     networks:
       - hadoop_network
     ports:
-      - "16021:16020"  
+      - "16021:16020"
       - "9090:9090"
     volumes:
       - dn1:/usr/local/hadoop/hdfs/datanode
@@ -145,7 +145,7 @@ services:
     networks:
       - hadoop_network
     ports:
-      - "16020:16020"  
+      - "16020:16020"
       - "9091:9090"
     volumes:
       - dn2:/usr/local/hadoop/hdfs/datanode
@@ -157,123 +157,113 @@ services:
       master2:
         condition: service_healthy
 
-  # hm1:
-  #   build:
-  #     context: .
-  #     target: hbase
-  #   container_name: hm1
-  #   hostname: hm1
-  #   networks:
-  #     - hadoop_network
-  #   ports:
-  #     - "16000:16000"  
-  #     - "16010:16010" 
-  #     - "9092:9090"
-  #   depends_on:
-  #     master1:
-  #       condition: service_healthy
-  #     master2:
-  #       condition: service_healthy
-  #   volumes:
-  #     - hm1_data:/usr/local/hbase/data 
+  postgres:
+    image: postgres:13
+    container_name: hive_postgres
+    hostname: hive_db
+    environment:
+      POSTGRES_PASSWORD: 123
+      POSTGRES_USER: hiveuser
+      POSTGRES_DB: metastore
+    volumes:
+      - metastore:/var/lib/postgresql/data
+    networks:
+      - hadoop_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hiveuser -d metastore"]
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
 
-  # hm2:
-  #   build:
-  #     context: .
-  #     target: hbase
-  #   container_name: hm2
-  #   hostname: hm2
-  #   networks:
-  #     - hadoop_network
-  #   ports:
-  #     - "16001:16000" 
-  #     - "16011:16010"
-  #     - "9093:9090"
-  #   depends_on:
-  #     master1:
-  #       condition: service_healthy
-  #     master2:
-  #       condition: service_healthy
-  #   volumes:
-  #     - hm2_data:/usr/local/hbase/data
+  h1:
+    build:
+      context: .
+      target: hive
+    container_name: h1
+    hostname: h1
+    networks:
+      - hadoop_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      master1:
+        condition: service_healthy
+      master2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep -i 'HiveMetaStore' | grep -v grep"]
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
 
-# postgres:
-#     image: postgres:13
-#     container_name: hive_postgres
-#     hostname: hive_db
-#     environment:
-#       POSTGRES_PASSWORD: 123
-#       POSTGRES_USER: hiveuser
-#       POSTGRES_DB: metastore
-#     volumes:
-#       - metastore:/var/lib/postgresql/data
-#     networks:
-#       - hadoop_network
-#     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U hiveuser -d metastore"]
-#       interval: 7s
-#       timeout: 7s
-#       retries: 15
-#       start_period: 15s
-#     # restart: always
+  h2:
+    build:
+      context: .
+      target: hive
+    container_name: h2
+    hostname: h2
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+    networks:
+      - hadoop_network
+    depends_on:
+      h1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep -i 'HiveServer2' | grep -v grep"]
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
+    environment:
+      - HADOOP_CLASSPATH=/usr/local/tez/conf:/usr/local/tez/tez-mapreduce-0.10.3.jar
 
-#   h1:
-#     build: 
-#       context: .
-#       target: hive
-#     container_name: h1
-#     hostname: h1
-#     # volumes:
-#     #   -
-#     networks:
-#       - hadoop_network
-#     depends_on:
-#       postgres:
-#         condition: service_healthy
-#       master1:
-#         condition: service_healthy
-#       master2:
-#         condition: service_healthy
-#       m3:
-#         condition: service_healthy
-#     healthcheck:
-#       test: ["CMD-SHELL", "ps aux | grep -i 'HiveMetaStore' | grep -v grep"]
-#       interval: 7s
-#       timeout: 7s
-#       retries: 15
-#       start_period: 15s
-#     # restart: always     
-#   h2:
-#     build: 
-#       context: .
-#       target: hive
-#     container_name: h2
-#     hostname: h2
-#     # volumes:
-#     #   - 
-#     ports:
-#         - "10000:10000"
-#         - "10002:10002"
-#     networks:
-#       - hadoop_network
-#     depends_on:
-#       h1:
-#         condition: service_healthy
-#     healthcheck:
-#       test: ["CMD-SHELL", "ps aux | grep -i 'HiveServer2' | grep -v grep"]
-#       interval: 7s
-#       timeout: 7s
-#       retries: 15
-#       start_period: 15s
-#     environment:
-#       - HADOOP_CLASSPATH=/usr/local/tez/conf:/usr/local/tez/tez-mapreduce-0.10.3.jar
-#     # restart: always
+  hm1:
+    build:
+      context: .
+      target: hbase
+    container_name: hm1
+    hostname: hm1
+    networks:
+      - hadoop_network
+    ports:
+      - "16000:16000"
+      - "16010:16010"
+      - "9092:9090"
+    depends_on:
+      master1:
+        condition: service_healthy
+      master2:
+        condition: service_healthy
+    volumes:
+      - hm1_data:/usr/local/hbase/data
 
+  hm2:
+    build:
+      context: .
+      target: hbase
+    container_name: hm2
+    hostname: hm2
+    networks:
+      - hadoop_network
+    ports:
+      - "16001:16000"
+      - "16011:16010"
+      - "9093:9090"
+    depends_on:
+      master1:
+        condition: service_healthy
+      master2:
+        condition: service_healthy
+    volumes:
+      - hm2_data:/usr/local/hbase/data
 
 networks:
   hadoop_network:
-  
-  
+
 volumes:
   nn1:
   nn2:
@@ -289,6 +279,6 @@ volumes:
   dn2:
   dtmp2:
   dlogs2:
-
-  # hm1_data:
-  # hm2_data:
+  metastore:
+  hm1_data:
+  hm2_data:
